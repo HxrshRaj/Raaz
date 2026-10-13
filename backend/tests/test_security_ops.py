@@ -3,6 +3,7 @@ from __future__ import annotations
 import subprocess
 import sys
 import threading
+import uuid
 from pathlib import Path
 
 import pytest
@@ -22,10 +23,11 @@ BACKEND = Path(__file__).resolve().parent.parent
 
 # ============================================================================ auth
 def test_register_login_me_flow(client):
-    body = {"email": "Case.Officer@example.com", "password": "monsoon-night-99", "display_name": "Officer"}
+    tag = uuid.uuid4().hex[:8]
+    body = {"email": f"Case.Officer.{tag}@example.com", "password": "monsoon-night-99", "display_name": "Officer"}
     r = client.post("/api/v1/auth/register", json=body)
     assert r.status_code == 201 and r.json()["user"]["is_guest"] is False
-    dup = client.post("/api/v1/auth/register", json={**body, "email": "case.officer@example.com"})
+    dup = client.post("/api/v1/auth/register", json={**body, "email": body["email"].lower()})
     assert dup.status_code == 409 and dup.json()["error"]["code"] == "registration_failed"
     ok = client.post("/api/v1/auth/login", json={"email": body["email"], "password": body["password"]})
     assert ok.status_code == 200
@@ -39,9 +41,9 @@ def test_register_login_me_flow(client):
 
 
 def test_passwords_are_hashed_never_stored_plain(client):
-    client.post("/api/v1/auth/register", json={"email": "h@example.com", "password": "correct-horse-battery", "display_name": "H"})
+    client.post("/api/v1/auth/register", json={"email": f"h{uuid.uuid4().hex[:6]}@example.com", "password": "correct-horse-battery", "display_name": "H"})
     with dbmod.SessionLocal() as db:
-        u = db.scalar(select(User).where(User.email == "h@example.com"))
+        u = db.scalar(select(User).order_by(User.created_at.desc()).where(User.email.like("h%@example.com")))
         assert u.password_hash and "correct-horse" not in u.password_hash and u.password_hash.startswith("$2")
     assert verify_password("correct-horse-battery", u.password_hash)
     assert not verify_password("nope", u.password_hash) and not verify_password("x", None)

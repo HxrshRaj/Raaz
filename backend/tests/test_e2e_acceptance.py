@@ -5,13 +5,15 @@ Each step asserts a real state transition (not just that something rendered).
 
 from __future__ import annotations
 
+import uuid
+
 from app.cases.registry import get_case
 from tests.helpers import Player
 
 
 def test_full_player_journey_with_save_and_resume(client):
     # --- 0. an account the player can come back to
-    creds = {"email": "inspector.e2e@example.com", "password": "monsoon-last-train-1", "display_name": "Inspector E2E"}
+    creds = {"email": f"inspector.{uuid.uuid4().hex[:8]}@example.com", "password": "monsoon-last-train-1", "display_name": "Inspector E2E"}
     r = client.post("/api/v1/auth/register", json=creds)
     assert r.status_code == 201
     p = Player.__new__(Player)  # reuse the helper's request methods with this token

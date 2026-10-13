@@ -73,8 +73,9 @@ def insert_ignore(db: Session, model, values: dict) -> bool:
         stmt = postgresql.insert(model).values(**values).on_conflict_do_nothing()
     else:  # pragma: no cover
         raise RuntimeError(f"unsupported dialect {dialect}")
-    res = db.execute(stmt)
-    return (res.rowcount or 0) > 0
+    # RETURNING (not rowcount): drivers report rowcount unreliably (-1) for INSERT .. ON CONFLICT on PostgreSQL.
+    pk_col = next(iter(model.__table__.primary_key.columns))
+    return db.execute(stmt.returning(pk_col)).first() is not None
 
 
 def bump(db: Session, session_id: str, *, actions: int = 1) -> None:
