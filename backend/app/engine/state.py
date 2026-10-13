@@ -78,6 +78,11 @@ def insert_ignore(db: Session, model, values: dict) -> bool:
     return db.execute(stmt.returning(pk_col)).first() is not None
 
 
+def rows_affected(res: Any) -> int:
+    """UPDATE/DELETE row count (reliable for UPDATE on both SQLite and PostgreSQL)."""
+    return int(getattr(res, "rowcount", 0) or 0)
+
+
 def bump(db: Session, session_id: str, *, actions: int = 1) -> None:
     """Atomic counter/version bump (no read-modify-write, so concurrent requests can't lose updates)."""
     db.execute(

@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from ..errors import Conflict, DomainError, Forbidden, NotFound
 from ..models import Accusation, Conversation, GameSession, Hypothesis, Report
 from .game import alibi_status, bearing_for, contradiction_view, visible_events
-from .state import SessionView, load_view
+from .state import SessionView, load_view, rows_affected
 
 MAX_HYPOTHESES = 12
 
@@ -289,7 +289,7 @@ def accuse(db: Session, view: SessionView, payload: dict[str, Any]) -> dict[str,
                 score=result["score"] if result["closed"] else GameSession.score,
                 completed_at=datetime.now(UTC) if result["closed"] else None)
     )
-    if (res.rowcount or 0) != 1:
+    if rows_affected(res) != 1:
         db.rollback()
         raise Conflict("concurrent_accusation", "Another accusation was processed first. Reload and try again.")
     result["attempt"] = expected + 1

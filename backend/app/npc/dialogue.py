@@ -21,7 +21,7 @@ from .. import metrics
 from ..cases.base import Character, ContradictionRule, Fact, Gate
 from ..config import get_settings
 from ..engine import game as game_svc
-from ..engine.state import SessionView, bump, insert_ignore
+from ..engine.state import SessionView, bump, insert_ignore, rows_affected
 from ..errors import Conflict, DomainError, NotFound
 from ..logging_setup import get_logger
 from ..models import CharacterMemory, Conversation, Disclosure, Message
@@ -515,7 +515,7 @@ def converse(db: Session, view: SessionView, char_key: str, text: str, ev_key: s
         .values(trust=plan.trust, stress=plan.stress, mood=mood, turns=Conversation.turns + 1,
                 tokens_used=Conversation.tokens_used + tokens, version=Conversation.version + 1, updated_at=datetime.now(UTC))
     )
-    if (res.rowcount or 0) != 1:
+    if rows_affected(res) != 1:
         db.rollback()
         raise Conflict("still_answering", "They are still answering your last question. Try again in a moment.")
     clean_text = safety.sanitize_player_text(text)

@@ -27,7 +27,7 @@ from ..models import Character as CharRow
 from ..models import Evidence as EvRow
 from ..models import Location as LocRow
 from .clock import clock_known, effective_held, fmt_seconds, to_rt_seconds
-from .state import SessionView, bump, insert_ignore, load_view
+from .state import SessionView, bump, insert_ignore, load_view, rows_affected
 
 CLOCK_LABEL = {"RT": "Real time (phones, banks, wearables)", "ST": "Station clock"}
 
@@ -287,7 +287,7 @@ def examine_evidence(db: Session, view: SessionView, ev_key: str) -> dict[str, A
                EvidenceDiscovery.examined.is_(False))
         .values(examined=True, examined_at=datetime.now(UTC))
     )
-    first = (res.rowcount or 0) > 0
+    first = rows_affected(res) > 0
     if first:
         bump(db, view.session.id)
     db.commit()
