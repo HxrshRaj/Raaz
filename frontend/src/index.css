@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body {
+  @apply bg-ink-900 text-paper font-body antialiased;
+  background-image: radial-gradient(1200px 600px at 70% -10%, rgba(242,169,78,0.07), transparent 60%),
+    radial-gradient(900px 500px at 0% 100%, rgba(111,135,166,0.08), transparent 60%);
+  background-attachment: fixed;
+}
+::selection { background: rgba(242,169,78,.35); }
+:focus-visible { outline: 2px solid #f2a94e; outline-offset: 2px; border-radius: 4px; }
+* { scrollbar-width: thin; scrollbar-color: #2a3547 transparent; }
+
+@layer components {
+  .panel { @apply rounded-xl border border-ink-500/70 bg-ink-700/80 backdrop-blur shadow-card; }
+  .panel-title { @apply font-display text-xl tracking-wide text-brass-light; }
+  .label { @apply text-[11px] uppercase tracking-[0.18em] text-paper-mute; }
+  .typewriter { @apply font-type text-[13px] leading-relaxed text-paper-dim; }
+  .chip { @apply inline-flex items-center gap-1 rounded-full border border-ink-500 bg-ink-800/80 px-2.5 py-0.5 text-xs text-paper-dim; }
+  .paper-card {
+    @apply relative rounded-md border border-brass-dark/40 text-ink-900;
+    background: linear-gradient(180deg, #e9e2d0, #d8cfb6);
+    box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 0 40px rgba(120,90,40,.15);
+  }
+}
+
+/* badges inside paper cards need dark chips to stay readable on cream paper */
+.paper-card span.inline-flex { background: #1d2636; color: #e9e2d0; border-color: #2a3547; }
+.paper-card span.inline-flex.text-emerald-300 { color: #86efac; }
+.paper-card span.inline-flex.text-blood-light { color: #f19a8a; }
+
+/* rain */
+.rain { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.rain i {
+  position: absolute; top: -20%; width: 1px; height: 14%;
+  background: linear-gradient(to bottom, rgba(180,200,225,0), rgba(180,200,225,.45));
+  animation: fall linear infinite;
+}
+@keyframes fall { to { transform: translateY(140vh); } }
+.vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.65)); }
+
+.typing::after { content: "▍"; animation: flicker 1s infinite; color: #f2a94e; margin-left: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rain i, .animate-flicker, .animate-pulseRing, .animate-rise, .typing::after { animation: none !important; }
+  * { scroll-behavior: auto !important; }
+}
+html[data-reduce-motion="true"] .rain i,
+html[data-reduce-motion="true"] .animate-flicker,
+html[data-reduce-motion="true"] .animate-pulseRing,
+html[data-reduce-motion="true"] .animate-rise { animation: none !important; }

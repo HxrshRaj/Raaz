@@ -1,0 +1,5 @@
+# CPU-only PyTorch for the deep-learning clue classifier.
+# Install with:  pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch>=2.2
+# optional experiment tracking mirror
+# mlflow>=2.14

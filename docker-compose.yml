@@ -1,0 +1,55 @@
+# RAAZ — local/production-like stack.  NOTE: authored but not executed in the environment where this repo was
+# built (no Docker engine was running). Validate with `docker compose config` and `docker compose up --build`.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-raaz}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-raaz}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-raaz} -d $${POSTGRES_DB:-raaz}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: { context: ./backend, args: { INSTALL_ML: "1" } }
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      RAAZ_ENV: prod
+      RAAZ_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-raaz}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-raaz}
+      RAAZ_REDIS_URL: redis://redis:6379/0
+      RAAZ_ARTIFACTS_DIR: /srv/artifacts
+      RAAZ_CORS_ORIGINS: ${RAAZ_CORS_ORIGINS:-http://localhost:8080}
+    volumes: [artifacts:/srv/artifacts]
+    expose: ["8000"]
+    stop_grace_period: 30s
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on: [api]
+    ports: ["8080:80"]
+
+volumes:
+  pgdata:
+  artifacts:
