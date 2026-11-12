@@ -37,6 +37,23 @@ docker compose exec api python -m app.cli train-ml     # optional: enables lead 
   reach it. If you publish the API port directly, restrict `--forwarded-allow-ips` to your proxy, or per-IP rate limits
   can be spoofed.
 
+## Free public demo (Render + Vercel)
+
+This path hosts a playable demo with no database or Redis to manage. It was verified locally (backend in `prod` mode on
+SQLite without PyTorch: `/health`, `/ready`, CORS preflight and guest login; frontend built with `VITE_API_BASE`).
+It has **not** been run on Render or Vercel by the author.
+
+1. **Backend (Render):** New > Blueprint > pick this repo (`render.yaml`). When asked, set `RAAZ_CORS_ORIGINS` to your
+   frontend URL (step 2). Note the service URL, e.g. `https://raaz-api.onrender.com`.
+2. **Frontend (Vercel):** New Project > this repo, root directory `frontend`, environment variable
+   `VITE_API_BASE=https://raaz-api.onrender.com` (no trailing slash). Deploy, then put the Vercel URL into Render's
+   `RAAZ_CORS_ORIGINS` and redeploy the API.
+3. Open the Vercel URL, choose **New Case > Play as guest**.
+
+Free-tier limits: the API sleeps when idle (first request is slow), and SQLite on Render's ephemeral disk resets on every
+deploy or restart, so progress is not kept. For persistence use a Postgres URL in `RAAZ_DATABASE_URL`. ML lead ranking
+needs `INSTALL_ML=1` and a training run, so it is off in this setup.
+
 ## Configuration
 
 All settings are `RAAZ_*` environment variables (see `.env.example`). Production specifics: `RAAZ_ENV=prod` disables
